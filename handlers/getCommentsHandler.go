@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func (h *Handler) getCommentsByReviewHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetCommentsByReviewHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return

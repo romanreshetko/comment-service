@@ -39,6 +39,11 @@ func main() {
 
 	h := handlers.New(db, rdb)
 	mux := http.NewServeMux()
+	mux.HandleFunc("/comments/get", h.GetCommentsByReviewHandler)
+	mux.Handle("/comment/create", authMiddleware(http.HandlerFunc(h.CreateCommentHandler)))
+	mux.Handle("/comment/update", authMiddleware(http.HandlerFunc(h.UpdateCommentHandler)))
+	mux.Handle("/comment/delete", authMiddleware(http.HandlerFunc(h.DeleteCommentHandler)))
+	mux.Handle("/comments/delete", authMiddleware(http.HandlerFunc(h.DeleteCommentsByReviewHandler)))
 	mux.Handle("/comment/update/status", authMiddleware(http.HandlerFunc(h.UpdateCommentStatusHandler)))
 	log.Println("Comment service started on port 8080")
 	log.Println(http.ListenAndServe(":8080", mux))

@@ -1,8 +1,10 @@
 services:
-  postgres:
+  postgres_comment:
     image: postgres:16
     container_name: comment-postgres
     restart: unless-stopped
+    networks:
+      - internal_net
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -13,25 +15,31 @@ services:
     ports:
       - "5434:5432"
 
-  redis:
+  redis_comment:
     image: redis:7
     restart: unless-stopped
+    networks:
+      - internal_net
 
   comment-service:
     build: .
     container_name: comment-service
     restart: unless-stopped
+    networks:
+      - shared_network
+      - internal_net
     depends_on:
-      - postgres
-      - redis
+      - postgres_comment
+      - redis_comment
     environment:
-      DB_HOST: postgres
+      DB_HOST: postgres_comment
       DB_PORT: 5432
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
       DB_SSLMODE: disable
       REDIS_ADDR: ${REDIS_ADDR}
+      SERVICE_TOKEN: ${SERVICE_TOKEN}
     volumes:
       - ./keys/public.pem:/app/keys/public.pem:ro
     ports:
@@ -40,3 +48,8 @@ services:
 
 volumes:
   comment_pgdata:
+
+networks:
+  internal_net:
+  shared_network:
+    external: true

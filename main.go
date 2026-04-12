@@ -1,10 +1,10 @@
 package main
 
 import (
-	"comment-service/auth"
 	"comment-service/cache"
 	DB "comment-service/db"
 	"comment-service/handlers"
+	"comment-service/middlewares"
 	"log"
 	"net/http"
 	"os"
@@ -30,12 +30,12 @@ func main() {
 		log.Fatalf("failed to connect redis: %v", err)
 	}
 
-	publicKey, err := auth.LoadPublicKey("./keys/public.pem")
+	publicKey, err := middlewares.LoadPublicKey("./keys/public.pem")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	authMiddleware := auth.AuthMiddleware(publicKey)
+	authMiddleware := middlewares.AuthMiddleware(publicKey)
 
 	h := handlers.New(db, rdb)
 	mux := http.NewServeMux()
@@ -45,6 +45,7 @@ func main() {
 	mux.Handle("/comment/delete", authMiddleware(http.HandlerFunc(h.DeleteCommentHandler)))
 	mux.Handle("/comments/delete", authMiddleware(http.HandlerFunc(h.DeleteCommentsByReviewHandler)))
 	mux.Handle("/comment/update/status", authMiddleware(http.HandlerFunc(h.UpdateCommentStatusHandler)))
+	handlerWithCors := middlewares.CorsMiddleware(mux)
 	log.Println("Comment service started on port 8080")
-	log.Println(http.ListenAndServe(":8080", mux))
+	log.Println(http.ListenAndServe(":8080", handlerWithCors))
 }

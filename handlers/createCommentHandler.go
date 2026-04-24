@@ -3,6 +3,7 @@ package handlers
 import (
 	"comment-service/models"
 	"comment-service/repository"
+	serviceIntegrations "comment-service/service-integrations"
 	"database/sql"
 	"encoding/json"
 	"github.com/redis/go-redis/v9"
@@ -46,7 +47,7 @@ func (h *Handler) CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = repository.CreateComment(h.db, reviewID, claims.UserID, req)
+	newID, err := repository.CreateComment(h.db, reviewID, claims.UserID, req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -55,6 +56,14 @@ func (h *Handler) CreateCommentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cacheKey := "comments_review" + strconv.FormatInt(reviewID, 10)
 	h.redis.Del(ctx, cacheKey)
+
+	w.Header().Set("Content-Type", "application/json")
+	err = json.NewEncoder(w).Encode(map[string]int64{"id": newID})
+	if err != nil {
+		return
+	}
+
+	go serviceIntegrations.UpdateUserPoints(claims.UserID, 5)
 
 	w.WriteHeader(http.StatusCreated)
 }

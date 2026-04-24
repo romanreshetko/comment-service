@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS comments (
     created_at TIMESTAMP NOT NULL,
     prev_comment_id BIGINT NULL,
     edited_flag BOOLEAN DEFAULT false,
-    edited_at NULL
+    edited_at TIMESTAMP NULL
 );
 
 CREATE INDEX idx_review_comments

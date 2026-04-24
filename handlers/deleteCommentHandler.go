@@ -3,6 +3,7 @@ package handlers
 import (
 	"comment-service/models"
 	"comment-service/repository"
+	serviceIntegrations "comment-service/service-integrations"
 	"net/http"
 	"strconv"
 )
@@ -48,6 +49,10 @@ func (h *Handler) DeleteCommentHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cacheKey := "comments_review" + strconv.FormatInt(reviewID, 10)
 	h.redis.Del(ctx, cacheKey)
+
+	go serviceIntegrations.UpdateUserPoints(claims.UserID, -5)
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func (h *Handler) DeleteCommentsByReviewHandler(w http.ResponseWriter, r *http.Request) {

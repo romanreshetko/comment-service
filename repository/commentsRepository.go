@@ -6,16 +6,18 @@ import (
 	"errors"
 )
 
-func CreateComment(db *sql.DB, reviewID, userID int64, req models.CreateCommentRequest) error {
-	_, err := db.Exec(`
+func CreateComment(db *sql.DB, reviewID, userID int64, req models.CreateCommentRequest) (int64, error) {
+	var id int64
+	err := db.QueryRow(`
 		INSERT INTO comments (review_id, user_id, comment_text, status, created_at, prev_comment_id)
 		VALUES ($1, $2, $3, $4, NOW(), $5)
-`, reviewID, userID, req.Text, "moderating", SafeDeref(req.PrevCommentID))
+		RETURNING id
+`, reviewID, userID, req.Text, "moderating", SafeDeref(req.PrevCommentID)).Scan(&id)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func UpdateCommentStatus(db *sql.DB, commentID int64, status string) error {

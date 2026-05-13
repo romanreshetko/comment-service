@@ -3,6 +3,7 @@ package handlers
 import (
 	"comment-service/models"
 	"comment-service/repository"
+	serviceIntegrations "comment-service/service-integrations"
 	"encoding/json"
 	"net/http"
 	"slices"
@@ -48,6 +49,10 @@ func (h *Handler) UpdateCommentStatusHandler(w http.ResponseWriter, r *http.Requ
 		}
 		http.Error(w, "error updating comment", http.StatusInternalServerError)
 		return
+	}
+
+	if claims.Role == "service" && (status == "published" || status == "blocked" || status == "moderation_error" || status == "undefined") {
+		go serviceIntegrations.CreateModerationLog(commentID, status)
 	}
 
 	w.WriteHeader(http.StatusOK)
